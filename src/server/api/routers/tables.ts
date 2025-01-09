@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { env } from "~/env";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   InserTableSchemaZod,
@@ -7,21 +8,20 @@ import {
   tables,
 } from "~/server/db/schema";
 import {
-  updateAnnotations,
+  getColumns,
   transformAddTable,
   transformJSONTableAdd,
-  transformReplaceTable,
   transformJSONTableReplace,
-  getColumns,
+  transformReplaceTable,
+  updateAnnotations,
   updateColumns,
 } from "~/server/utils";
 import {
   Annotations,
   HomePageTable,
   ProcessableTable,
+  Table,
 } from "~/utils/types/tables";
-import { Table } from "~/utils/types/tables";
-import { env } from "~/env";
 
 export const tablesRouter = createTRPCRouter({
   // insert table in DB
@@ -316,4 +316,19 @@ export const tablesRouter = createTRPCRouter({
         throw new Error("DB is Unreachable");
       }
     }),
+  entity_info: publicProcedure.input(z.string()).query(async ({ input }) => {
+    const entity_infos = await fetch(
+      `${env.PLUGINS_HOST}/entity_info/${input}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const data = await entity_infos.json();
+    return data as {
+      description: string,
+      label: string,
+      url: string
+    }
+  }),
 });

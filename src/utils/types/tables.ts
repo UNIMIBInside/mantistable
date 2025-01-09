@@ -9,7 +9,6 @@ export type HomePageTable = {
 };
 
 // ----------------------------------------
-
 // cell type for csv tables
 export type Cell = {
   text: string;
