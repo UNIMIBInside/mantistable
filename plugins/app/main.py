@@ -3,6 +3,7 @@ import os
 import json
 import shutil
 import zipfile
+import requests
 import subprocess
 from collections import Counter
 from pydantic import BaseModel
@@ -321,3 +322,35 @@ async def column_analysis(data: ColumnData):
         most_common = Counter(lit_results).most_common()[0][0]
         result.append({"column": col_head, "category": most_common})
     return result
+
+@app.get('/entity_info/{id}')
+async def entity_info(id: str):
+    # make request
+    headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+
+    params = {
+        'kg': 'wikidata',
+        'lang': 'en',
+        'token': 'lamapi_demo_2023',
+    }
+
+    json_data = {
+        'json': [
+            id,
+        ],
+    }
+
+    response: dict = requests.post('https://lamapi.datai.disco.unimib.it/entity/labels', params=params, headers=headers, json=json_data)
+    json_response = response.json().get(id, None)
+    if json_response is not None:
+        return {
+            "url": json_response["url"] if "url" in json_response else "",
+            "label": json_response["labels"]["en"] if "en" in json_response["labels"] else "-",
+            "description": json_response["description"] if "description" in json_response else "-"
+        }
+    else:
+        raise HTTPException(
+            status_code=404, detail="Entity not found")
